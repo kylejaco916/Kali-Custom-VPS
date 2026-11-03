@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=ffuf-replay
+Comment=Noise-free ffuf web fuzzer forwarding only matched hits to Caido (127.0.0.1:8080)
+Exec=/usr/share/kali-menu/exec-in-shell "ffuf-replay -h"
+Icon=kali-ffuf
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-scanning;kali-reconnaissance;Network;Security;

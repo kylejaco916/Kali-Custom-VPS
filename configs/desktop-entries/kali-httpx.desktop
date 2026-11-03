@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=httpx
+Comment=Fast and multi-purpose HTTP toolkit (ProjectDiscovery)
+Exec=/usr/share/kali-menu/exec-in-shell "httpx -h"
+Icon=kali-web-application-proxies
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-scanning;kali-reconnaissance;Network;Security;

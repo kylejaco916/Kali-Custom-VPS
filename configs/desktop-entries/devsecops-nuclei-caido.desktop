@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=nuclei-caido
+Comment=Nuclei active vulnerability scanner routed through Caido (127.0.0.1:8080)
+Exec=/usr/share/kali-menu/exec-in-shell "nuclei-caido -h"
+Icon=kali-nuclei
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-vulnerability-scanning;Network;Security;

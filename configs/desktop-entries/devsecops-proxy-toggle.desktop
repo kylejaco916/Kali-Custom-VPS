@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=proxy-toggle (Caido / ZAP / Chain)
+Comment=Switch Browser & Proxy Chaining Mode (caido | zap | chain | direct | status)
+Exec=/usr/share/kali-menu/exec-in-shell "proxy-toggle status; echo ''; echo 'Run: proxy-toggle {caido|zap|chain|direct|status}'"
+Icon=kali-web-application-proxies
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-vulnerability-scanning;kali-web-scanning;kali-usual-applications;Network;Security;

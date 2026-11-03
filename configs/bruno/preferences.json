@@ -1,0 +1,28 @@
+{
+  "maximized": false,
+  "sslVerification": false,
+  "customCaCertificate": {
+    "enabled": true,
+    "filePath": "/home/kali/.local/share/devsecops-lab/certs/caido-ca.pem"
+  },
+  "keepDefaultCaCertificates": {
+    "enabled": true
+  },
+  "storeCookies": true,
+  "sendCookies": true,
+  "proxy": {
+    "disabled": false,
+    "inherit": false,
+    "config": {
+      "protocol": "http",
+      "hostname": "127.0.0.1",
+      "port": 8080,
+      "auth": {
+        "disabled": true,
+        "username": "",
+        "password": ""
+      },
+      "bypassProxy": ""
+    }
+  }
+}

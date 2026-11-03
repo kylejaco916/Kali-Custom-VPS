@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=arjun-caido
+Comment=Arjun HTTP parameter discovery suite forwarding hits into Caido (127.0.0.1:8080)
+Exec=/usr/share/kali-menu/exec-in-shell "arjun-caido -h"
+Icon=kali-arjun
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-scanning;Network;Security;

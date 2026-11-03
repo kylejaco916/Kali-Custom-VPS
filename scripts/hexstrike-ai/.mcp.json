@@ -1,0 +1,28 @@
+{
+  "model": {
+    "provider": "openai-compatible",
+    "base_url": "http://colab-gpu:8085/v1",
+    "api_key": "sk-tailscale-mesh",
+    "default": "Abiray/Huihui-Qwythos-9B-Claude-Mythos-5-1M-abliterated-GGUF:Q8_0",
+    "parameters": {
+      "temperature": 0.1,
+      "repeat_penalty": 1.15,
+      "max_tokens": 2048
+    }
+  },
+  "mcpServers": {
+    "hexstrike-ai": {
+      "type": "stdio",
+      "command": "/home/kali/hexstrike-ai/hexstrike-env/bin/python3",
+      "args": [
+        "-Xutf8",
+        "/home/kali/hexstrike-ai/hexstrike_mcp.py",
+        "--server",
+        "http://127.0.0.1:8888",
+        "--timeout",
+        "600"
+      ],
+      "disabled": false
+    }
+  }
+}

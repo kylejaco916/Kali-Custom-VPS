@@ -1,0 +1,101 @@
+The SSH key has been added and Kali is ready for      incoming connections.                               
+  ### 1. What was done on Kali:
+
+  • Stored public key inside authorized_keys with
+  permissions 600 (and 700 on ~/.ssh).
+  • Verified the SSH daemon (ssh.service) is
+  enabled and actively running.
+  ──────
+  ### 2. Connecting from Debian 13 (Openbox /
+  Distrobox):
+
+  Ensure your matching private key (typically
+  ~/.ssh/id_ed25519) exists on your Debian /
+  Distrobox host and has proper permissions:
+
+    chmod 600 ~/.ssh/id_ed25519
+
+  #### Direct SSH:
+
+    ssh -i ~/.ssh/id_ed25519 kali@167.234.221.173
+
+  #### Optional: Add to ~/.ssh/config on your
+  Debian host
+
+  Add this block to your local ~/.ssh/config so you
+  can simply type ssh kali:
+
+    Host kali
+        HostName 167.234.221.173
+        User kali
+        IdentityFile ~/.ssh/id_ed25519
+        IdentitiesOnly yes
+        # Optional: Enable X11 forwarding into
+        Openbox if running GUI apps
+        # ForwardX11 yes
+
+  │ Note
+  │ If your Debian 13 host connects via an internal
+  │ network / VPN (e.g., Tailscale or private VCN
+  │ subnet), replace 167.234.221.173 with Kali's
+  │ private address (10.0.0.223).
+
+───────────────────────────────────────────────────
+> add everything you suggested for me
+
+● Bash(sudo grep -Ei
+'^(X11Forwarding|PasswordAuthen...)
+● Bash(which xauth || sudo apt-get install -y xauth)
+● Bash(cat << 'EOF' > /home/kali/debian-ssh-client-
+s...)
+● Bash(sudo ss -tulpn | grep :22) (ctrl+o to expand)
+
+  Everything requested and suggested has been
+  prepared and configured:
+
+  ### 1. Configured on this Kali machine
+
+  • Authorized Key: Placed in authorized_keys (mode
+  600).
+  • X11 Forwarding: Confirmed X11Forwarding yes in
+  sshd_config and verified /usr/bin/xauth is
+  installed.
+  • SSH Daemon: Active, hardened
+  (PasswordAuthentication no), and listening on
+  port 22 (167.234.221.173).
+  • Client Helper Script: Created
+  debian-ssh-client-setup.sh.
+  ──────
+  ### 2. Run on your Debian 13 (Openbox /
+  Distrobox) host
+
+  To automatically apply the configuration to your
+  Debian host/distrobox, run this single command on
+  your Debian terminal:
+
+    mkdir -p ~/.ssh && chmod 700 ~/.ssh && touch
+    ~/.ssh/config && chmod 600 ~/.ssh/config &&
+    grep -q "Host kali" ~/.ssh/config 2>/dev/null
+    || cat << 'EOF' >> ~/.ssh/config
+
+    Host kali
+        HostName 167.234.221.173
+        User kali
+        IdentityFile ~/.ssh/id_ed25519
+        IdentitiesOnly yes
+        ForwardX11 yes
+        ForwardX11Trusted yes
+    EOF
+    [ -f ~/.ssh/id_ed25519 ] && chmod 600
+    ￹~/.ssh/id_ed25519
+
+  ### 3. Connect:
+
+  Now, from Debian 13 or inside Distrobox, simply
+  connect with:
+
+    ssh kali
+
+  (X11 forwarding will allow any GUI applications
+  launched on Kali to render seamlessly directly on
+  your Openbox desktop).

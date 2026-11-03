@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=subfinder
+Comment=subdomain discovery tool
+Exec=/usr/share/kali-menu/exec-in-shell "subfinder -h"
+Icon=kali-subfinder
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-scanning
+X-Kali-Package=subfinder

@@ -1,0 +1,21 @@
+{
+  "version": "1",
+  "name": "Target API Audit (Caido Routed)",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ],
+  "proxy": {
+    "enabled": true,
+    "protocol": "http",
+    "hostname": "127.0.0.1",
+    "port": 8080,
+    "auth": {
+      "enabled": false,
+      "username": "",
+      "password": ""
+    },
+    "bypassProxy": ""
+  }
+}

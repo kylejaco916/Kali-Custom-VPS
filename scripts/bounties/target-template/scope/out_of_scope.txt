@@ -1,0 +1,11 @@
+# Explicitly Out-of-Scope Assets (Strictly excluded before any active probing)
+# Supports:
+#   - Wildcard subdomains: *.corp.example.com
+#   - Exact subdomains:    status.example.com
+#   - Path/endpoint globs: *example.com/logout*
+status.example.com
+blog.example.com
+*.corp.example.com
+*.internal.example.com
+*example.com/logout*
+*example.com/contact*

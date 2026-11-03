@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=katana-safe (Safe-Harbor)
+Comment=Rate-limited katana crawler with BOUNTY_HEADER and Caido proxy (127.0.0.1:8080)
+Exec=/usr/share/kali-menu/exec-in-shell "katana-safe -h"
+Icon=kali-katana
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-scanning;kali-reconnaissance;

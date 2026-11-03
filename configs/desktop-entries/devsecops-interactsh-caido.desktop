@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=interactsh-caido
+Comment=Interactsh OAST Collaborator client routed through Caido (127.0.0.1:8080)
+Exec=/usr/share/kali-menu/exec-in-shell "interactsh-caido -h"
+Icon=kali-web-vulnerability-scanners
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-vulnerability-scanning;kali-reconnaissance;Network;Security;

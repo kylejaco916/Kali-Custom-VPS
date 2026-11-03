@@ -1,0 +1,17 @@
+wireshark-common	wireshark-common/install-setuid	boolean	true
+kismet-capture-common	kismet-capture-common/install-setuid	boolean	false
+kismet-capture-common	kismet-capture-common/install-users	string	kali
+macchanger	macchanger/automatically_run	boolean	false
+macchanger	macchanger/automatically-run	boolean	false
+sslh	sslh/inetd_or_standalone	select	standalone
+sslh	sslh/run_mode	select	standalone
+iptables-persistent	iptables-persistent/autosave_v4	boolean	true
+iptables-persistent	iptables-persistent/autosave_v6	boolean	true
+krb5-config	krb5-config/default_realm	string	
+krb5-config	krb5-config/add_servers	boolean	false
+krb5-config	krb5-config/read_conf	boolean	true
+jackd	jackd/tweak_rt_limits	boolean	false
+jackd2	jackd/tweak_rt_limits	boolean	false
+libc6	libraries/restart-without-asking	boolean	true
+debconf	debconf/frontend	select	Noninteractive
+debconf	debconf/priority	select	critical

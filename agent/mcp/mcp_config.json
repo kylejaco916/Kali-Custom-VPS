@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "kali-security-tools": {
+      "command": "/usr/bin/python3",
+      "args": [
+        "/home/kali/.local/share/mcp-servers/security-tools/security_mcp_server.py"
+      ],
+      "env": {
+        "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      }
+    },
+    "hexstrike-ai": {
+      "command": "/home/kali/hexstrike-ai/hexstrike-env/bin/python3",
+      "args": [
+        "/home/kali/hexstrike-ai/hexstrike_mcp.py",
+        "--server",
+        "http://127.0.0.1:8888"
+      ]
+    }
+  }
+}

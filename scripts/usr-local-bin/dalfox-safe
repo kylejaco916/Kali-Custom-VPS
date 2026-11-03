@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+[ -f "$HOME/.bounty_env" ] && source "$HOME/.bounty_env"
+DELAY_MS=$(( 1000 / ${MAX_RATE:-10} ))
+exec /usr/bin/dalfox -H "${BOUNTY_HEADER:-X-Bug-Bounty: Researcher-Handle}" --proxy "${BOUNTY_PROXY:-http://127.0.0.1:8080}" --delay "$DELAY_MS" "$@"

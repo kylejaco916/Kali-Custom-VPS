@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=interactsh-client
+Comment=Out-of-band (OAST) interaction gathering client (ProjectDiscovery)
+Exec=/usr/share/kali-menu/exec-in-shell "interactsh-client -h"
+Icon=kali-web-vulnerability-scanners
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-vulnerability-scanning;kali-reconnaissance;Network;Security;

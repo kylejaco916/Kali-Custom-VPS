@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=jwt_tool
+Comment=Toolkit for validating, forging, scanning and tampering JWTs (routed via Caido)
+Exec=/usr/share/kali-menu/exec-in-shell "jwt_tool -h"
+Icon=kali-menu
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-vulnerability-scanning;kali-unsecured-credentials;kali-reconnaissance;

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=scope-filter (Safe-Harbor Gate)
+Comment=Strict in-scope / out-of-scope domain and URL filter for Bug Bounty recon pipelines
+Exec=/usr/share/kali-menu/exec-in-shell "scope-filter -h"
+Icon=kali-menu
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-scanning;kali-reconnaissance;

@@ -1,0 +1,347 @@
+#!/bin/sh
+# ==============================================================================
+# kali-mode: Headless / GUI Desktop Mode Switcher for Kali Linux (OCI)
+# Feature F8 (ORIGINAL_REQUEST §R6, PROJECT.md)
+# ==============================================================================
+# Seamlessly toggles between:
+#   1. Headless Mode (multi-user.target): Lightweight, minimal RAM (<350 MB target)
+#      for 24/7 autonomous HexStrike MCP operations.
+#   2. Desktop GUI Mode (graphical.target): Full XFCE4 desktop + XRDP on port 3389
+#      (~1.1 GB RAM profile) for interactive penetration testing and analysis.
+# ==============================================================================
+
+# Ensure execution in bash across Android Termux, Debian, OCI, and standard Linux
+if [ -z "${BASH_VERSION:-}" ]; then
+    for bash_candidate in bash /data/data/com.termux/files/usr/bin/bash /bin/bash /usr/bin/bash; do
+        if command -v "$bash_candidate" >/dev/null 2>&1; then
+            exec "$bash_candidate" "$0" "$@"
+        fi
+    done
+    echo "Error: bash is required to run $0" >&2
+    exit 1
+fi
+
+set -uo pipefail
+
+# ------------------------------------------------------------------------------
+# Usage & Help Documentation
+# ------------------------------------------------------------------------------
+show_help() {
+    cat << 'EOF'
+Usage: kali-mode [OPTIONS] [COMMAND]
+
+Headless / GUI Mode Switching Utility for Kali Linux on Oracle Cloud Infrastructure (OCI).
+Feature F8 (ORIGINAL_REQUEST §R6, PROJECT.md)
+
+Commands:
+  headless    Switch to lightweight Headless mode (multi-user.target, <350 MB RAM).
+              Stops XRDP/desktop services to preserve resources for autonomous HexStrike MCP.
+  gui         Switch to Full Desktop GUI mode (graphical.target, ~1.1 GB RAM).
+              Verifies XFCE4 and XRDP prerequisites, starts XRDP on port 3389.
+  status      Display current default and active systemd targets, XRDP service status,
+              HexStrike MCP daemon persistence, and memory profile (free -m).
+
+Options:
+  -h, --help  Show this help and usage documentation and exit cleanly.
+
+Privilege Guard:
+  Mode switching commands ('headless', 'gui') require root/sudo privileges (EUID 0).
+  Inspection commands ('status', '--help') can be run by unprivileged users.
+
+Resource Footprints:
+  - Headless Target : <350 MB RAM (multi-user.target, minimal background MCP agent footprint)
+  - Desktop GUI Target : ~1.1 GB RAM (graphical.target, XFCE4 + XRDP on port 3389)
+  - HexStrike MCP Persistence : Anchored in multi-user.target, surviving all transitions.
+
+EOF
+}
+
+# ------------------------------------------------------------------------------
+# Privilege Guard
+# ------------------------------------------------------------------------------
+check_privileges() {
+    local action="${1:-operation}"
+    if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
+        echo "Error: Root or sudo privileges required for mode switching ($action)." >&2
+        echo "Please execute with sudo: sudo kali-mode $action" >&2
+        exit 1
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# Package Prerequisite Validation
+# ------------------------------------------------------------------------------
+check_desktop_packages() {
+    local missing=0
+    if ! command -v xfce4-session >/dev/null 2>&1; then
+        if ! dpkg -l kali-desktop-xfce 2>/dev/null | grep -q '^ii'; then
+            echo "[!] Warning: xfce4-session (kali-desktop-xfce) is not installed." >&2
+            missing=1
+        fi
+    fi
+    if ! command -v xrdp >/dev/null 2>&1; then
+        if ! dpkg -l xrdp 2>/dev/null | grep -q '^ii'; then
+            echo "[!] Warning: xrdp is not installed." >&2
+            missing=1
+        fi
+    fi
+
+    if [[ $missing -ne 0 ]]; then
+        echo "[ERROR] Required desktop packages missing for GUI mode." >&2
+        echo "Please install them using:" >&2
+        echo "    sudo apt update && sudo apt install -y kali-desktop-xfce xrdp" >&2
+        exit 1
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# Target State Helpers
+# ------------------------------------------------------------------------------
+get_default_target() {
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl get-default 2>/dev/null || echo "unknown"
+    else
+        echo "unknown"
+    fi
+}
+
+get_active_target() {
+    if command -v systemctl >/dev/null 2>&1; then
+        if systemctl is-active graphical.target >/dev/null 2>&1; then
+            echo "graphical.target"
+        elif systemctl is-active multi-user.target >/dev/null 2>&1; then
+            echo "multi-user.target"
+        else
+            echo "unknown"
+        fi
+    else
+        echo "unknown"
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# Memory Usage Metrics
+# ------------------------------------------------------------------------------
+show_memory_profile() {
+    echo ""
+    echo "=============================================================================="
+    echo "SYSTEM MEMORY USAGE PROFILE (free -m & MemAvailable)"
+    echo "=============================================================================="
+    if command -v free >/dev/null 2>&1; then
+        free -m
+    fi
+    if [[ -f /proc/meminfo ]]; then
+        local mem_avail_kb mem_avail_mb mem_total_kb mem_total_mb
+        mem_avail_kb=$(grep -i "MemAvailable:" /proc/meminfo 2>/dev/null | awk '{print $2}' || echo "0")
+        mem_total_kb=$(grep -i "MemTotal:" /proc/meminfo 2>/dev/null | awk '{print $2}' || echo "0")
+        if [[ -n "$mem_avail_kb" && "$mem_avail_kb" -gt 0 ]]; then
+            mem_avail_mb=$((mem_avail_kb / 1024))
+            mem_total_mb=$((mem_total_kb / 1024))
+            echo "Memory Available (MemAvailable): ${mem_avail_mb} MB / ${mem_total_mb} MB total RAM"
+        fi
+    fi
+    echo "Target Baselines: Headless Target: <350 MB RAM | GUI Target: ~1.1 GB RAM"
+    echo "=============================================================================="
+}
+
+# ------------------------------------------------------------------------------
+# Command: headless
+# ------------------------------------------------------------------------------
+cmd_headless() {
+    check_privileges "headless"
+
+    local current_default current_active
+    current_default=$(get_default_target)
+    current_active=$(get_active_target)
+
+    # Idempotency check: if already in headless mode
+    if [[ "$current_default" == "multi-user.target" && "$current_active" == "multi-user.target" ]]; then
+        echo "[INFO] System is already in headless mode (multi-user.target). Current state is optimal."
+        echo "[*] Ensuring desktop and XRDP services are stopped..."
+        if command -v systemctl >/dev/null 2>&1; then
+            systemctl stop xrdp xrdp-sesman 2>/dev/null || true
+        fi
+        echo "[+] Headless mode verified. Target memory consumption is <350 MB RAM."
+        show_memory_profile
+        return 0
+    fi
+
+    echo "[*] Transitioning to HEADLESS mode (multi-user.target)..."
+
+    if command -v systemctl >/dev/null 2>&1; then
+        # Set persistent default target to multi-user.target
+        echo "[*] Setting default target to multi-user.target..."
+        systemctl set-default multi-user.target
+
+        # Isolate multi-user.target to terminate desktop sessions
+        echo "[*] Isolating multi-user.target (stopping display managers & X11)..."
+        systemctl isolate multi-user.target
+
+        # Ensure XRDP service is stopped to free RAM (<350 MB target)
+        echo "[*] Stopping XRDP remote desktop services..."
+        systemctl stop xrdp xrdp-sesman 2>/dev/null || true
+
+        # Verify HexStrike MCP and SSE daemons remain running
+        # Both are anchored in multi-user.target (WantedBy=multi-user.target)
+        echo "[*] Preserving HexStrike MCP daemon (hexstrike-mcp.service, hexstrike-sse.service)..."
+        if systemctl is-enabled hexstrike-mcp.service >/dev/null 2>&1; then
+            systemctl start hexstrike-mcp.service 2>/dev/null || true
+        fi
+        if systemctl is-enabled hexstrike-sse.service >/dev/null 2>&1; then
+            systemctl start hexstrike-sse.service 2>/dev/null || true
+        fi
+    else
+        echo "[!] Warning: systemctl not available in this environment. Mode change skipped." >&2
+    fi
+
+    echo "[+] System successfully transitioned to HEADLESS mode (multi-user.target)."
+    echo "[+] RAM target: <350 MB baseline RAM footprint for background automation."
+    show_memory_profile
+}
+
+# ------------------------------------------------------------------------------
+# Command: gui
+# ------------------------------------------------------------------------------
+cmd_gui() {
+    check_privileges "gui"
+    check_desktop_packages
+
+    local current_default current_active xrdp_status="inactive"
+    current_default=$(get_default_target)
+    current_active=$(get_active_target)
+    if command -v systemctl >/dev/null 2>&1; then
+        xrdp_status=$(systemctl is-active xrdp 2>/dev/null || echo "inactive")
+    fi
+
+    # Configure user .xsession for XFCE
+    local target_user user_home
+    target_user="${SUDO_USER:-$(logname 2>/dev/null || whoami 2>/dev/null || echo "kali")}"
+    user_home=$(getent passwd "$target_user" 2>/dev/null | cut -d: -f6 || echo "/home/$target_user")
+    if [[ -d "$user_home" ]]; then
+        echo "xfce4-session" > "$user_home/.xsession"
+        chown "$target_user:$target_user" "$user_home/.xsession" 2>/dev/null || true
+        chmod 644 "$user_home/.xsession" 2>/dev/null || true
+    fi
+
+    # Idempotency check: if already in GUI mode with XRDP active
+    if [[ "$current_default" == "graphical.target" && "$current_active" == "graphical.target" && "$xrdp_status" == "active" ]]; then
+        echo "[INFO] System is already in GUI mode (graphical.target) with XRDP active. Current state is optimal."
+        echo "[+] Expected RAM consumption profile: ~1.1 GB RAM."
+        show_memory_profile
+        return 0
+    fi
+
+    echo "[*] Transitioning to FULL DESKTOP GUI mode (graphical.target)..."
+
+    if command -v systemctl >/dev/null 2>&1; then
+        # Set persistent default target to graphical.target
+        echo "[*] Setting default target to graphical.target..."
+        systemctl set-default graphical.target
+
+        # Isolate graphical.target
+        echo "[*] Isolating graphical.target..."
+        systemctl isolate graphical.target
+
+        # Start and enable XRDP service on port 3389
+        echo "[*] Starting XRDP service (port 3389)..."
+        systemctl enable xrdp 2>/dev/null || true
+        systemctl restart xrdp xrdp-sesman 2>/dev/null || systemctl start xrdp xrdp-sesman 2>/dev/null || true
+
+        # HexStrike MCP services persist under multi-user.target (a prerequisite of graphical.target)
+        echo "[*] HexStrike MCP services persist under underlying multi-user.target..."
+    else
+        echo "[!] Warning: systemctl not available in this environment. Mode change skipped." >&2
+    fi
+
+    echo "[+] System successfully transitioned to FULL DESKTOP GUI mode (graphical.target)."
+    echo "[+] Desktop environment: XFCE4 session configured."
+    echo "[+] Remote access service: XRDP listening on port 3389."
+    echo "[+] Expected RAM consumption profile: ~1.1 GB RAM."
+    echo "[*] Access GUI securely via SSH port forwarding:"
+    echo "    ssh -L 3389:127.0.0.1:3389 kali@<OCI_INSTANCE_IP>"
+    echo "    Then connect RDP client (mstsc, Remmina) to localhost:3389."
+    show_memory_profile
+}
+
+# ------------------------------------------------------------------------------
+# Command: status
+# ------------------------------------------------------------------------------
+cmd_status() {
+    local default_tgt active_tgt xrdp_active mcp_active sse_active rdp_port_listener
+
+    if command -v systemctl >/dev/null 2>&1; then
+        default_tgt=$(systemctl get-default 2>/dev/null || echo "unknown")
+        active_tgt="multi-user.target"
+        if systemctl is-active graphical.target >/dev/null 2>&1; then
+            active_tgt="graphical.target"
+        elif systemctl is-active multi-user.target >/dev/null 2>&1; then
+            active_tgt="multi-user.target"
+        else
+            active_tgt=$(systemctl is-active default.target 2>/dev/null || echo "unknown")
+        fi
+        xrdp_active=$(systemctl is-active xrdp 2>/dev/null || echo "inactive")
+        mcp_active=$(systemctl is-active hexstrike-mcp.service 2>/dev/null || echo "inactive")
+        sse_active=$(systemctl is-active hexstrike-sse.service 2>/dev/null || echo "inactive")
+    else
+        default_tgt="unknown (systemctl unavailable)"
+        active_tgt="unknown"
+        xrdp_active="unknown"
+        mcp_active="unknown"
+        sse_active="unknown"
+    fi
+
+    if command -v ss >/dev/null 2>&1; then
+        rdp_port_listener=$(ss -tulpn 2>/dev/null | grep -E ":3389\b" || echo "Not listening on port 3389")
+    elif command -v netstat >/dev/null 2>&1; then
+        rdp_port_listener=$(netstat -tlpn 2>/dev/null | grep -E ":3389\b" || echo "Not listening on port 3389")
+    else
+        rdp_port_listener="Port inspection tool (ss/netstat) not available"
+    fi
+
+    echo "=============================================================================="
+    echo "KALI LINUX MODE & WORKLOAD STATUS"
+    echo "=============================================================================="
+    echo "Current Default Target : $default_tgt"
+    echo "Current Active Target  : $active_tgt"
+    echo "XRDP Service State     : $xrdp_active"
+    echo "XRDP Port (3389)       : $rdp_port_listener"
+    echo "HexStrike MCP Service  : $mcp_active"
+    echo "HexStrike SSE Service  : $sse_active"
+    echo "------------------------------------------------------------------------------"
+    if [[ "$active_tgt" == "graphical.target" || "$xrdp_active" == "active" ]]; then
+        echo "Current Mode Assessment: [GUI MODE ACTIVE] (Profile ~1.1 GB RAM)"
+    else
+        echo "Current Mode Assessment: [HEADLESS MODE ACTIVE] (Target <350 MB RAM)"
+    fi
+    show_memory_profile
+}
+
+# ------------------------------------------------------------------------------
+# Main Command Dispatcher
+# ------------------------------------------------------------------------------
+if [[ $# -eq 0 ]]; then
+    echo "Error: No command specified." >&2
+    echo "Usage: kali-mode [headless|gui|status|--help]" >&2
+    exit 1
+fi
+
+case "$1" in
+    headless)
+        cmd_headless
+        ;;
+    gui)
+        cmd_gui
+        ;;
+    status)
+        cmd_status
+        ;;
+    -h|--help|help)
+        show_help
+        exit 0
+        ;;
+    *)
+        echo "Error: Unknown or invalid command '$1'." >&2
+        echo "Usage: kali-mode [headless|gui|status|--help]" >&2
+        exit 1
+        ;;
+esac

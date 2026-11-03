@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=dalfox-safe (Safe-Harbor)
+Comment=Rate-limited dalfox XSS scanner with BOUNTY_HEADER and Caido proxy (127.0.0.1:8080)
+Exec=/usr/share/kali-menu/exec-in-shell "dalfox-safe -h"
+Icon=kali-dalfox
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-vulnerability-scanning;kali-reconnaissance;

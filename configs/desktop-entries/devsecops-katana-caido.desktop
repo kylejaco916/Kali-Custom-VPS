@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=katana-caido
+Comment=Katana JS/Headless crawler routed through Caido (127.0.0.1:8080)
+Exec=/usr/share/kali-menu/exec-in-shell "katana-caido -h"
+Icon=kali-katana
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-scanning;Network;Security;

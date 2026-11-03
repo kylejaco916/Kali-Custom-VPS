@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=PortSwigger Lab Browser
+Comment=Firefox ESR with isolated portswigger-lab profile, Container Tabs, and Caido/ZAP Root CAs
+Exec=/usr/local/bin/portswigger-browser
+Icon=firefox-esr
+StartupNotify=true
+Terminal=false
+Type=Application
+Categories=kali-web-vulnerability-scanning;kali-web-scanning;kali-usual-applications;Network;WebBrowser;Network;Security;

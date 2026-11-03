@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=trufflehog
+Comment=Searches through git repositories for secrets
+Exec=/usr/share/kali-menu/exec-in-shell "trufflehog"
+Icon=kali-menu
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-unsecured-credentials
+X-Kali-Package=trufflehog

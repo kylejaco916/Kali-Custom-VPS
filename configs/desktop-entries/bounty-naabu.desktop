@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=naabu
+Comment=Fast port and service enumeration tool (ProjectDiscovery)
+Exec=/usr/share/kali-menu/exec-in-shell "naabu -h"
+Icon=kali-menu
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-network-information;kali-network-service-discovery;kali-reconnaissance;

@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+# proxy-toggle: Switch Firefox Lab Profile & Caido/ZAP Proxy Chaining
+# Modes:
+#   caido  -> Browser -> Caido (127.0.0.1:8080) -> Target (Standalone Caido)
+#   zap    -> Browser -> OWASP ZAP (127.0.0.1:8081) -> Target (Standalone ZAP)
+#   chain  -> Browser -> Caido (127.0.0.1:8080) -> OWASP ZAP (127.0.0.1:8081) -> Target
+#   direct -> Browser -> Target (No Proxy)
+#   status -> Display current proxy listeners, browser setting, and chaining state
+
+set -euo pipefail
+
+PROFILE_DIR="/home/kali/.mozilla/firefox/portswigger-lab"
+USER_JS="$PROFILE_DIR/user.js"
+PREFS_JS="$PROFILE_DIR/prefs.js"
+CAIDO_DB="/home/kali/.local/share/caido/config.db"
+CAIDO_GQL="http://127.0.0.1:8080/graphql"
+ZAP_API="http://127.0.0.1:8081/JSON"
+
+set_firefox_proxy() {
+    local proxy_type="$1"
+    local port="$2"
+    mkdir -p "$PROFILE_DIR"
+    if [ -f "$USER_JS" ]; then
+        sed -i -E "s|user_pref\(\"network\.proxy\.type\", *[0-9]+\);|user_pref(\"network.proxy.type\", ${proxy_type});|g" "$USER_JS"
+        sed -i -E "s|user_pref\(\"network\.proxy\.http_port\", *[0-9]+\);|user_pref(\"network.proxy.http_port\", ${port});|g" "$USER_JS"
+        sed -i -E "s|user_pref\(\"network\.proxy\.ssl_port\", *[0-9]+\);|user_pref(\"network.proxy.ssl_port\", ${port});|g" "$USER_JS"
+    fi
+    if [ -f "$PREFS_JS" ]; then
+        sed -i -E "s|user_pref\(\"network\.proxy\.type\", *[0-9]+\);|user_pref(\"network.proxy.type\", ${proxy_type});|g" "$PREFS_JS"
+        sed -i -E "s|user_pref\(\"network\.proxy\.http_port\", *[0-9]+\);|user_pref(\"network.proxy.http_port\", ${port});|g" "$PREFS_JS"
+        sed -i -E "s|user_pref\(\"network\.proxy\.ssl_port\", *[0-9]+\);|user_pref(\"network.proxy.ssl_port\", ${port});|g" "$PREFS_JS"
+    fi
+}
+
+set_caido_upstream_zap() {
+    local enable_bool="$1" # true or false
+    local enable_int=0
+    [ "$enable_bool" = "true" ] && enable_int=1
+
+    # 1. Live update via Caido GraphQL API if Caido is listening on 8080
+    if ss -tln | grep -q "127.0.0.1:8080 "; then
+        local token
+        token=$(curl -s -X POST "$CAIDO_GQL" \
+            -H "Content-Type: application/json" \
+            -d '{"query":"mutation { loginAsGuest { token { accessToken } } }"}' | jq -r '.data.loginAsGuest.token.accessToken // empty' 2>/dev/null || true)
+        if [ -n "$token" ]; then
+            local proxy_id
+            proxy_id=$(sqlite3 -batch -noheader "$CAIDO_DB" "SELECT id FROM upstream_proxies_http WHERE host='127.0.0.1' AND port=8081 LIMIT 1;" 2>/dev/null || true)
+            if [ -z "$proxy_id" ]; then
+                curl -s -X POST "$CAIDO_GQL" \
+                    -H "Content-Type: application/json" \
+                    -H "Authorization: Bearer $token" \
+                    -d "{\"query\":\"mutation { createUpstreamProxyHttp(input: { enabled: ${enable_bool}, allowlist: [\\\"*\\\"], denylist: [], connection: { host: \\\"127.0.0.1\\\", port: 8081, isTLS: false } }) { proxy { id enabled } } }\"}" >/dev/null 2>&1 || true
+            else
+                curl -s -X POST "$CAIDO_GQL" \
+                    -H "Content-Type: application/json" \
+                    -H "Authorization: Bearer $token" \
+                    -d "{\"query\":\"mutation { toggleUpstreamProxyHttp(id: \\\"${proxy_id}\\\", enabled: ${enable_bool}) { proxy { id enabled } } }\"}" >/dev/null 2>&1 || true
+            fi
+        fi
+    fi
+
+    # 2. Ensure SQLite DB state matches
+    if [ -f "$CAIDO_DB" ]; then
+        sqlite3 "$CAIDO_DB" "UPDATE upstream_proxies_http SET enabled=${enable_int} WHERE host='127.0.0.1' AND port=8081;" 2>/dev/null || true
+    fi
+}
+
+show_status() {
+    echo "============================================================"
+    echo "  DevSecOps & PortSwigger Lab Proxy Pipeline Status"
+    echo "============================================================"
+    if ss -tln | grep -qE "127\.0\.0\.1\]?:8080 "; then
+        echo "[+] Caido Proxy     : LISTENING on 127.0.0.1:8080"
+    else
+        echo "[-] Caido Proxy     : STOPPED (127.0.0.1:8080)"
+    fi
+
+    if ss -tln | grep -qE "127\.0\.0\.1\]?:8081 "; then
+        echo "[+] OWASP ZAP Proxy : LISTENING on 127.0.0.1:8081"
+    else
+        echo "[-] OWASP ZAP Proxy : STOPPED (127.0.0.1:8081)"
+    fi
+
+    local ff_type ff_port chain_state
+    ff_type=$(grep -oE 'user_pref\("network\.proxy\.type", *[0-9]+' "$USER_JS" 2>/dev/null | grep -oE '[0-9]+$' || echo "1")
+    ff_port=$(grep -oE 'user_pref\("network\.proxy\.http_port", *[0-9]+' "$USER_JS" 2>/dev/null | grep -oE '[0-9]+$' || echo "8080")
+    chain_state=$(sqlite3 -batch -noheader "$CAIDO_DB" "SELECT enabled FROM upstream_proxies_http WHERE host='127.0.0.1' AND port=8081 LIMIT 1;" 2>/dev/null || echo "0")
+
+    if [ "$ff_type" = "0" ]; then
+        echo "[*] Browser Profile : DIRECT (No Proxy)"
+    elif [ "$ff_port" = "8080" ] && [ "$chain_state" = "1" ]; then
+        echo "[*] Active Mode     : CHAINED (Browser -> Caido 127.0.0.1:8080 -> ZAP 127.0.0.1:8081)"
+    elif [ "$ff_port" = "8080" ]; then
+        echo "[*] Active Mode     : CAIDO STANDALONE (Browser -> Caido 127.0.0.1:8080)"
+    elif [ "$ff_port" = "8081" ]; then
+        echo "[*] Active Mode     : ZAP STANDALONE (Browser -> OWASP ZAP 127.0.0.1:8081)"
+    else
+        echo "[*] Active Mode     : Custom Port 127.0.0.1:${ff_port}"
+    fi
+
+    local oast_srv
+    oast_srv=$(curl -s --max-time 2 "${ZAP_API}/oast/view/getActiveScanService/" 2>/dev/null | jq -r '.getActiveScanService // "Offline"' 2>/dev/null || echo "Offline")
+    echo "[*] ZAP OAST Service: ${oast_srv}"
+    echo "============================================================"
+}
+
+MODE="${1:-status}"
+case "$MODE" in
+    caido)
+        set_firefox_proxy 1 8080
+        set_caido_upstream_zap false
+        echo "[+] Switched to CAIDO STANDALONE mode (Browser -> 127.0.0.1:8080)"
+        show_status
+        ;;
+    zap)
+        set_firefox_proxy 1 8081
+        set_caido_upstream_zap false
+        echo "[+] Switched to OWASP ZAP STANDALONE mode (Browser -> 127.0.0.1:8081)"
+        show_status
+        ;;
+    chain)
+        set_firefox_proxy 1 8080
+        set_caido_upstream_zap true
+        echo "[+] Switched to CHAINED mode (Browser -> Caido 127.0.0.1:8080 -> ZAP 127.0.0.1:8081)"
+        show_status
+        ;;
+    direct|off)
+        set_firefox_proxy 0 8080
+        set_caido_upstream_zap false
+        echo "[+] Switched to DIRECT mode (Browser proxy disabled)"
+        show_status
+        ;;
+    status)
+        show_status
+        ;;
+    *)
+        echo "Usage: proxy-toggle {caido|zap|chain|direct|status}"
+        exit 1
+        ;;
+esac

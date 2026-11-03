@@ -1,0 +1,16 @@
+Host termux
+        HostName 100.85.79.23
+        Port 8022
+        User u0_a608
+        IdentityFile ~/.ssh/id_ed25519
+        ServerAliveInterval 30
+
+Host colab-gpu
+    HostName colab-gpu
+    User root
+    Port 2222
+    IdentityFile ~/.ssh/id_ed25519
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    ServerAliveInterval 30
+    ServerAliveCountMax 3

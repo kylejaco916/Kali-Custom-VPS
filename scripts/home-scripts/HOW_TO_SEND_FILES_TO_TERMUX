@@ -1,0 +1,15 @@
+### 4. Seamless File Transfers
+
+  #### From Kali to Termux:
+
+    # Push any file or directory directly to Termux
+    home
+    scp -P 8022 -r my_file.txt termux:~/
+
+    # Or using rsync
+    rsync -avz -e "ssh -p 8022" my_folder/
+    termux:~/my_folder/
+
+  #### From Termux to Kali:
+
+    send-to-kali scan_results.txt ~/projects/

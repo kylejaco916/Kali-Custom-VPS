@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=gau (GetAllUrls)
+Comment=Fetch known historical URLs from AlienVault OTX, Wayback Machine, and CommonCrawl
+Exec=/usr/share/kali-menu/exec-in-shell "gau -h"
+Icon=kali-menu
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-scanning;kali-reconnaissance;

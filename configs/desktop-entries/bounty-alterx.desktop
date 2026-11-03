@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=alterx
+Comment=Fast and customizable subdomain permutation wordlist generator
+Exec=/usr/share/kali-menu/exec-in-shell "alterx -h"
+Icon=kali-subfinder
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-network-information-dns;kali-reconnaissance;

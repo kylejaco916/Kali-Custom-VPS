@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=dalfox
+Comment=Powerful open-source XSS scanner
+Exec=/usr/share/kali-menu/exec-in-shell "dalfox -h"
+Icon=kali-dalfox
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-vulnerability-scanning
+X-Kali-Package=dalfox

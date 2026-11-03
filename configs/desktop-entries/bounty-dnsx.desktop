@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=dnsx
+Comment=Fast and multi-purpose DNS toolkit (ProjectDiscovery)
+Exec=/usr/share/kali-menu/exec-in-shell "dnsx -h"
+Icon=kali-subfinder
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-network-information-dns;kali-reconnaissance;

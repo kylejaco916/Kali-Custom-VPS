@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=waybackurls
+Comment=Fetch all historical URLs that the Wayback Machine knows about for a domain
+Exec=/usr/share/kali-menu/exec-in-shell "waybackurls -h"
+Icon=kali-menu
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-scanning;kali-reconnaissance;

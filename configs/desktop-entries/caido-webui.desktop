@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Caido Web UI (127.0.0.1:8080)
+Comment=Launch Caido Proxy Daemon and Open Caido Web UI on 127.0.0.1:8080
+Exec=/bin/bash -c "ss -tln | grep -qE '127\.0\.0\.1\]?:8080 ' || (/usr/lib/caido-cli/caido-cli --listen 127.0.0.1:8080 --no-open --allow-guests >/dev/null 2>&1 & sleep 2); /usr/bin/firefox http://127.0.0.1:8080"
+Icon=kali-caido
+StartupNotify=true
+Terminal=false
+Type=Application
+Categories=kali-web-vulnerability-scanning;kali-reconnaissance;kali-usual-applications;Network;Security;

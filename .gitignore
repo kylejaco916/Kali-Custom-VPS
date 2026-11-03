@@ -1,0 +1,19 @@
+# Never commit private keys, tokens, VNC passwd files, virtualenvs, or runtime logs
+id_ed25519
+id_rsa
+*.pem
+*.key
+passwd
+__pycache__/
+*.pyc
+hexstrike-env/
+.venv/
+*.log
+logs/
+e2e_results.json
+e2e_final_report.json
+permuted_scoped.txt
+raw_subdomains.txt
+resolved_hosts.txt
+scoped_subdomains.txt
+seed_domains.txt

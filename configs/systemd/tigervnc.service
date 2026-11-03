@@ -1,0 +1,17 @@
+[Unit]
+Description=TigerVNC Server on Display :1
+After=network.target
+
+[Service]
+Type=forking
+User=kali
+Group=kali
+WorkingDirectory=/home/kali
+ExecStartPre=-/usr/bin/vncserver -kill :1
+ExecStart=/usr/bin/vncserver :1 -geometry 1920x1080 -depth 24 -localhost no
+ExecStop=/usr/bin/vncserver -kill :1
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

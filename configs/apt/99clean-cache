@@ -1,0 +1,3 @@
+// Direct archive cleanup (replaces apt-get clean to eliminate lock contention on /var/cache/apt/archives/lock)
+APT::Keep-Downloaded-Packages "false";
+DPkg::Post-Invoke { "rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb 2>/dev/null || true"; };

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=gowitness
+Comment=Web screenshot and visual attack surface triage utility using headless Chrome
+Exec=/usr/share/kali-menu/exec-in-shell "gowitness -h"
+Icon=kali-menu
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-scanning;kali-reconnaissance;

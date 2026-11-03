@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=sqlmap-caido
+Comment=SQLmap automatic SQLi scanner routed through Caido (127.0.0.1:8080)
+Exec=/usr/share/kali-menu/exec-in-shell "sqlmap-caido -h"
+Icon=kali-sqlmap
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-initial-access;kali-web-vulnerability-scanning;Network;Security;

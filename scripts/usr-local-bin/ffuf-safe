@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+[ -f "$HOME/.bounty_env" ] && source "$HOME/.bounty_env"
+exec /usr/bin/ffuf -H "${BOUNTY_HEADER:-X-Bug-Bounty: Researcher-Handle}" -rate "${MAX_RATE:-10}" -replay-proxy "${BOUNTY_PROXY:-http://127.0.0.1:8080}" "$@"

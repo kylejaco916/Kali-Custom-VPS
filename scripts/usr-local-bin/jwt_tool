@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+exec /opt/jwt_tool/.venv/bin/python3 /opt/jwt_tool/jwt_tool.py "$@"

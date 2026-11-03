@@ -1,0 +1,22 @@
+# ==============================================================================
+# Bug Bounty Safe-Harbor & Rate-Limit Configuration (~/.bounty_env)
+# ==============================================================================
+# Customize BOUNTY_HEADER per program requirements (HackerOne, Bugcrowd, Intigriti)
+# Examples:
+#   export BOUNTY_HEADER="X-Bug-Bounty: HackerOne-Handle"
+#   export BOUNTY_HEADER="User-Agent: Mozilla/5.0 (compatible; Bugcrowd-Handle)"
+export BOUNTY_HEADER="${BOUNTY_HEADER:-X-Bug-Bounty: Researcher-Handle}"
+
+# Maximum requests per second (RPS) to prevent WAF lockouts / DoS violations
+export MAX_RATE="${MAX_RATE:-10}"
+
+# Local intercepting proxy (Caido default: 127.0.0.1:8080)
+export BOUNTY_PROXY="${BOUNTY_PROXY:-http://127.0.0.1:8080}"
+
+# Safe-Harbor Wrapper Aliases (Injects Header, Rate-Limit, and Caido Proxy)
+alias ffuf-safe='ffuf -H "$BOUNTY_HEADER" -rate "$MAX_RATE" -replay-proxy "$BOUNTY_PROXY"'
+alias nuclei-safe='nuclei -H "$BOUNTY_HEADER" -rl "$MAX_RATE" -proxy "$BOUNTY_PROXY"'
+alias katana-safe='katana -H "$BOUNTY_HEADER" -rl "$MAX_RATE" -proxy "$BOUNTY_PROXY"'
+alias httpx-safe='/usr/local/bin/httpx -H "$BOUNTY_HEADER" -rl "$MAX_RATE" -proxy "$BOUNTY_PROXY"'
+alias dalfox-safe='dalfox -H "$BOUNTY_HEADER" --proxy "$BOUNTY_PROXY" --delay $(( 1000 / ${MAX_RATE:-10} ))'
+alias scope-filter='/usr/local/bin/scope-filter'

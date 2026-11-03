@@ -1,0 +1,10 @@
+#!/bin/sh
+# Compatibility shim for John the Ripper to support --version
+for arg in "$@"; do
+    if [ "$arg" = "--version" ] || [ "$arg" = "-v" ]; then
+        echo "John the Ripper 1.9.0-jumbo-1"
+        exec /usr/sbin/john --list=build-info
+    fi
+done
+
+exec /usr/sbin/john "$@"

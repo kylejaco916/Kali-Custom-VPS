@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Launch pre-configured Firefox ESR profile for PortSwigger Web Security Academy & Local DevSecOps Labs
+PROFILE_DIR="/home/kali/.mozilla/firefox/portswigger-lab"
+exec /usr/bin/firefox --profile "$PROFILE_DIR" --no-remote "${@:-https://portswigger.net/web-security/all-labs}"

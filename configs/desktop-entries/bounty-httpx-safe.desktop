@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=httpx-safe (Safe-Harbor)
+Comment=Rate-limited httpx prober with BOUNTY_HEADER and Caido proxy (127.0.0.1:8080)
+Exec=/usr/share/kali-menu/exec-in-shell "httpx-safe -h"
+Icon=kali-httpx
+StartupNotify=false
+Terminal=true
+Type=Application
+Categories=kali-web-scanning;kali-reconnaissance;

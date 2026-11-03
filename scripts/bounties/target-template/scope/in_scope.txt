@@ -1,0 +1,7 @@
+# Authorized In-Scope Assets (One pattern per line)
+# Supports:
+#   - Wildcard domains: *.example.com (matches sub.example.com and example.com)
+#   - Exact domains:    api.example.com (matches only api.example.com)
+#   - URL prefixes:     https://app.example.com/api/*
+*.example.com
+example.com
