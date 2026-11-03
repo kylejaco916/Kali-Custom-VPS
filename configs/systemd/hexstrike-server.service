@@ -1,0 +1,17 @@
+[Unit]
+Description=HexStrike AI Local MCP Tool Server (127.0.0.1:8888)
+After=network.target
+
+[Service]
+Type=simple
+User=kali
+Group=kali
+WorkingDirectory=/home/kali/hexstrike-ai
+Environment=HOME=/home/kali
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/kali/go/bin:/home/kali/.local/bin
+ExecStart=/home/kali/hexstrike-ai/hexstrike-env/bin/python3 /home/kali/hexstrike-ai/hexstrike_server.py --port 8888
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

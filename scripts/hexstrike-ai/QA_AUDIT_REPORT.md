@@ -25,7 +25,7 @@ drwxrwxr-x  7 kali kali      4096 Oct 26 18:07 .git
 drwxrwxr-x  2 kali kali      4096 Oct 26 17:56 __pycache__
 drwxrwxr-x  2 kali kali      4096 Oct 26 17:53 assets
 -rw-rw-r--  1 kali kali       386 Oct 26 17:53 hexstrike-ai-mcp.json
-lrwxrwxrwx  1 kali kali        71 Oct 27 07:51 hexstrike-env -> /home/kali/teamwork_projects/hexstrike_colab_orchestrator/hexstrike_env
+drwxrwxr-x  7 kali kali        4096 Nov  1 21:49 hexstrike-env
 -rw-rw-r--  1 kali kali 168411954 Oct 31 23:21 hexstrike.log
 -rw-rw-r--  1 kali kali    217937 Oct 26 17:53 hexstrike_mcp.py
 -rw-rw-r--  1 kali kali    734576 Oct 26 17:53 hexstrike_server.py

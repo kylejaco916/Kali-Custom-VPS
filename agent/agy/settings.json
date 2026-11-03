@@ -1,0 +1,31 @@
+{
+  "agentMode": "accept-edits",
+  "allowNonWorkspaceAccess": true,
+  "artifactReviewPolicy": "agent-decides",
+  "editor": "nano",
+  "model": "Gemini 4 Argon (High)",
+  "notifications": true,
+  "permissions": {
+    "allow": [
+      "command(ls)",
+      "command(which)",
+      "command(agy)",
+      "command(uname)",
+      "command(cat)",
+      "command(apt-cache)",
+      "command(tail)",
+      "command(grep)",
+      "command(free)",
+      "command(df)"
+    ]
+  },
+  "queuedMessages": "send-immediately",
+  "runningLightSpeed": "fast",
+  "showFeedbackSurvey": false,
+  "toolPermission": "always-proceed",
+  "trustedWorkspaces": [
+    "/home/kali",
+    "/home/kali/.ssh"
+  ],
+  "verbosity": "high"
+}

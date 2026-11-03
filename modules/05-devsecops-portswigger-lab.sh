@@ -32,7 +32,8 @@ fi
 
 # 3. Configure Dedicated Firefox Lab Profile (/home/kali/.mozilla/firefox/portswigger-lab)
 PROFILE_DIR="${HOME}/.mozilla/firefox/portswigger-lab"
-mkdir -p "${PROFILE_DIR}" "${HOME}/.local/share/devsecops-lab/certs" "${HOME}/.local/share/devsecops-lab/bin" "${HOME}/.config/devsecops-lab"
+CERT_DIR="${HOME}/.local/share/devsecops-lab/certs"
+mkdir -p "${PROFILE_DIR}" "${CERT_DIR}" "${HOME}/.local/share/devsecops-lab/bin" "${HOME}/.config/devsecops-lab"
 cp -f "${REPO_ROOT}/configs/firefox-portswigger-lab/user.js" "${PROFILE_DIR}/user.js"
 
 PROFILES_INI="${HOME}/.mozilla/firefox/profiles.ini"
@@ -57,18 +58,47 @@ if [[ ! -f "${HOME}/.ZAP/config.xml" ]]; then
     cp -f "${REPO_ROOT}/configs/zap/config.xml" "${HOME}/.ZAP/config.xml"
 fi
 
-# 5. Export / Trust Caido & ZAP Root CAs in Firefox cert9.db if present
-if [[ -f "${HOME}/.local/share/caido/ca.crt" && ! -f "${HOME}/.local/share/devsecops-lab/certs/caido-ca.pem" ]]; then
-    cp -f "${HOME}/.local/share/caido/ca.crt" "${HOME}/.local/share/devsecops-lab/certs/caido-ca.pem"
-fi
-if [[ -f "${HOME}/.local/share/devsecops-lab/certs/caido-ca.pem" ]]; then
-    certutil -A -n "Caido Root CA" -t "CT,C,C" -i "${HOME}/.local/share/devsecops-lab/certs/caido-ca.pem" -d "sql:${PROFILE_DIR}" 2>/dev/null || true
-fi
-if [[ -f "${HOME}/.local/share/devsecops-lab/certs/zap-ca.pem" ]]; then
-    certutil -A -n "OWASP ZAP Root CA" -t "CT,C,C" -i "${HOME}/.local/share/devsecops-lab/certs/zap-ca.pem" -d "sql:${PROFILE_DIR}" 2>/dev/null || true
+# 5. Deploy & Start Persistent Caido systemd service (127.0.0.1:8080 --allow-guests)
+sudo cp -f "${REPO_ROOT}/configs/systemd/caido.service" /etc/systemd/system/caido.service
+sudo systemctl daemon-reload
+sudo systemctl enable caido.service
+if ! systemctl is-active --quiet caido.service; then
+    # Stop any unmanaged caido-cli instance holding 127.0.0.1:8080 before starting systemd unit
+    pkill -f "caido-cli.*127.0.0.1:8080" 2>/dev/null || true
+    sleep 1
+    sudo systemctl start caido.service
 fi
 
-# 6. Install all DevSecOps Wrapper Scripts & Proxy Chaining Controller
+# Wait up to 15s for Caido HTTP listener on 127.0.0.1:8080
+for _ in {1..15}; do
+    if curl -fsSL --max-time 2 http://127.0.0.1:8080/ca.crt >/dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
+
+# 6. Auto-Generate / Export & Trust Caido + OWASP ZAP Root CAs in Firefox cert9.db
+if [[ ! -s "${CERT_DIR}/caido-ca.pem" ]]; then
+    echo "[*] Exporting Caido Root CA from http://127.0.0.1:8080/ca.crt..."
+    curl -fsSL http://127.0.0.1:8080/ca.crt -o "${CERT_DIR}/caido-ca.pem" || true
+fi
+if [[ -s "${CERT_DIR}/caido-ca.pem" ]]; then
+    certutil -D -n "Caido Root CA" -d "sql:${PROFILE_DIR}" 2>/dev/null || true
+    certutil -A -n "Caido Root CA" -t "CT,C,C" -i "${CERT_DIR}/caido-ca.pem" -d "sql:${PROFILE_DIR}"
+fi
+
+if [[ ! -s "${CERT_DIR}/zap-ca.pem" ]]; then
+    echo "[*] Generating and exporting OWASP ZAP Root CA via zaproxy -cmd -certpubdump..."
+    zaproxy -cmd -certpubdump "${CERT_DIR}/zap-ca.pem" \
+        -addoninstall ascanrulesBeta \
+        -addoninstall pscanrulesBeta >/dev/null 2>&1 || true
+fi
+if [[ -s "${CERT_DIR}/zap-ca.pem" ]]; then
+    certutil -D -n "OWASP ZAP Root CA" -d "sql:${PROFILE_DIR}" 2>/dev/null || true
+    certutil -A -n "OWASP ZAP Root CA" -t "CT,C,C" -i "${CERT_DIR}/zap-ca.pem" -d "sql:${PROFILE_DIR}"
+fi
+
+# 7. Install all DevSecOps Wrapper Scripts & Proxy Chaining Controller
 DEVSECOPS_WRAPPERS=(portswigger-browser proxy-toggle arjun-caido ffuf-caido ffuf-replay httpx-caido interactsh-caido katana-caido nuclei-caido sqlmap-caido)
 for w in "${DEVSECOPS_WRAPPERS[@]}"; do
     cp -f "${REPO_ROOT}/scripts/usr-local-bin/${w}" "${HOME}/.local/share/devsecops-lab/bin/${w}"
@@ -77,10 +107,10 @@ for w in "${DEVSECOPS_WRAPPERS[@]}"; do
     sudo chmod 0755 "/usr/local/bin/${w}"
 done
 
-# 7. Deploy ~/.config/devsecops-lab/aliases.sh and ~/devsecops-lab-commands documentation folder
+# 8. Deploy ~/.config/devsecops-lab/aliases.sh and ~/devsecops-lab-commands documentation folder
 cp -f "${REPO_ROOT}/configs/dotfiles/devsecops-aliases.sh" "${HOME}/.config/devsecops-lab/aliases.sh"
 mkdir -p "${HOME}/devsecops-lab-commands"
 cp -rf "${REPO_ROOT}/scripts/devsecops-lab-commands/"* "${HOME}/devsecops-lab-commands/"
 chmod 0755 "${HOME}/devsecops-lab-commands/scripts/"*
 
-echo "[+] Module 05 complete: PortSwigger Lab browser profile, proxy-toggle, *-caido wrappers, and documentation deployed."
+echo "[+] Module 05 complete: PortSwigger Lab browser profile, caido.service, Root CAs in cert9.db, proxy-toggle, and *-caido wrappers deployed."

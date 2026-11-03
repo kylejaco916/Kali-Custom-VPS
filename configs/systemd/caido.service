@@ -1,0 +1,15 @@
+[Unit]
+Description=Caido Local Security Proxy Daemon (127.0.0.1:8080)
+After=network.target
+
+[Service]
+Type=simple
+User=kali
+Group=kali
+Environment=HOME=/home/kali
+ExecStart=/usr/bin/caido-cli --listen 127.0.0.1:8080 --no-open --allow-guests
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
